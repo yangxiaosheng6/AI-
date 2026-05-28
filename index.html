@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI创业项目评估助手</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --text: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+      --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .header-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      border-radius: 14px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 16px rgba(79, 70, 229, 0.35);
+    }
+
+    .header-icon svg {
+      width: 28px;
+      height: 28px;
+      fill: white;
+    }
+
+    .header h1 {
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .input-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 32px;
+      border: 1px solid var(--border);
+    }
+
+    .input-card label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .textarea-wrapper {
+      position: relative;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 16px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--text);
+      background: #fafbfc;
+      resize: vertical;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+      background: var(--surface);
+    }
+
+    textarea::placeholder {
+      color: #94a3b8;
+    }
+
+    .btn-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    .btn-evaluate {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 2px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-evaluate:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
+    }
+
+    .btn-evaluate:active {
+      transform: translateY(0);
+    }
+
+    .btn-evaluate:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-evaluate svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .results-section {
+      display: none;
+    }
+
+    .results-section.visible {
+      display: block;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .results-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .results-header .badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 20px;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 640px) {
+      .results-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .result-card.full-width {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .result-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      transition: box-shadow 0.2s;
+    }
+
+    .result-card:hover {
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .card-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .card-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .card-icon.pain     { background: #fef2f2; color: #ef4444; }
+    .card-icon.compete  { background: #fff7ed; color: #f97316; }
+    .card-icon.user     { background: #eff6ff; color: #3b82f6; }
+    .card-icon.risk     { background: #fefce8; color: #eab308; }
+    .card-icon.next     { background: #f0fdf4; color: #22c55e; }
+
+    .card-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .card-body {
+      color: var(--text-secondary);
+      font-size: 0.925rem;
+      line-height: 1.75;
+    }
+
+    .loading-overlay {
+      display: none;
+      text-align: center;
+      padding: 48px 20px;
+    }
+
+    .loading-overlay.visible {
+      display: block;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-overlay p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .empty-hint {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .error-message {
+      display: none;
+      margin-bottom: 24px;
+      padding: 14px 18px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-sm);
+      color: #b91c1c;
+      font-size: 0.925rem;
+      line-height: 1.5;
+    }
+
+    .error-message.visible {
+      display: block;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 48px;
+      color: #94a3b8;
+      font-size: 0.8rem;
+    }
+
+    .auth-view {
+      max-width: 420px;
+      margin: 0 auto 32px;
+    }
+
+    .auth-card h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .form-field {
+      margin-bottom: 16px;
+    }
+
+    .form-field label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .form-field input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--text);
+      background: #fafbfc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-field input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+      background: var(--surface);
+    }
+
+    .btn-primary {
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px 28px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .auth-switch {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .auth-switch a {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .auth-switch a:hover {
+      text-decoration: underline;
+    }
+
+    .auth-error {
+      display: none;
+      margin-top: 16px;
+      padding: 12px 14px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-sm);
+      color: #b91c1c;
+      font-size: 0.875rem;
+    }
+
+    .auth-error.visible {
+      display: block;
+    }
+
+    .user-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 14px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .user-bar .welcome {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    .user-bar .welcome strong {
+      color: var(--text);
+    }
+
+    .btn-logout {
+      padding: 8px 16px;
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .btn-logout:hover {
+      color: var(--text);
+      border-color: #cbd5e1;
+    }
+
+    .user-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-my-reports {
+      padding: 8px 16px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .btn-my-reports:hover {
+      background: #e0e7ff;
+      color: var(--primary-hover);
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.45);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 520px;
+      max-height: min(80vh, 640px);
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-header h2 {
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: #f1f5f9;
+      border-radius: 8px;
+      font-size: 1.5rem;
+      line-height: 1;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .modal-close:hover {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .modal-body {
+      padding: 16px 24px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-loading {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .modal-loading .spinner {
+      margin-bottom: 12px;
+    }
+
+    .modal-error {
+      display: none;
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-sm);
+      color: #b91c1c;
+      font-size: 0.875rem;
+    }
+
+    .modal-error.visible {
+      display: block;
+    }
+
+    .reports-empty {
+      text-align: center;
+      padding: 40px 16px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .reports-list {
+      list-style: none;
+    }
+
+    .report-item {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .report-item:last-child {
+      border-bottom: none;
+    }
+
+    .report-item-time {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    .report-item-idea {
+      font-size: 0.925rem;
+      color: var(--text);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .btn-view-report {
+      padding: 6px 14px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-view-report:hover {
+      background: #e0e7ff;
+    }
+
+    .btn-view-report:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .report-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-delete-report {
+      padding: 6px 14px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #b91c1c;
+      background: #fef2f2;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-delete-report:hover {
+      background: #fee2e2;
+    }
+
+    .btn-delete-report:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .reports-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .reports-pagination[hidden] {
+      display: none;
+    }
+
+    .btn-page {
+      padding: 8px 14px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+
+    .btn-page:hover:not(:disabled) {
+      background: #e0e7ff;
+    }
+
+    .btn-page:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .reports-page-info {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      min-width: 72px;
+      text-align: center;
+    }
+
+    #app-view {
+      display: none;
+    }
+
+    #app-view.visible {
+      display: block;
+    }
+
+    #auth-view.hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+        <div class="header-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <h1>AI创业项目评估助手</h1>
+      <p id="header-subtitle">登录后开始评估你的创业想法</p>
+    </header>
+
+    <div id="auth-view" class="auth-view">
+      <section class="input-card auth-card" id="login-panel">
+        <h2>登录</h2>
+        <form id="login-form" novalidate>
+          <div class="form-field">
+            <label for="login-username">用户名</label>
+            <input type="text" id="login-username" name="username" autocomplete="username" placeholder="请输入用户名" required>
+          </div>
+          <div class="form-field">
+            <label for="login-password">密码</label>
+            <input type="password" id="login-password" name="password" autocomplete="current-password" placeholder="请输入密码" required>
+          </div>
+          <button type="submit" class="btn-primary" id="btn-login">登录</button>
+        </form>
+        <p class="auth-switch">还没有账号？<a id="link-to-register">立即注册</a></p>
+        <div class="auth-error" id="login-error" role="alert"></div>
+      </section>
+
+      <section class="input-card auth-card" id="register-panel" hidden>
+        <h2>注册</h2>
+        <form id="register-form" novalidate>
+          <div class="form-field">
+            <label for="register-username">用户名</label>
+            <input type="text" id="register-username" name="username" autocomplete="username" placeholder="至少 3 个字符" required>
+          </div>
+          <div class="form-field">
+            <label for="register-password">密码</label>
+            <input type="password" id="register-password" name="password" autocomplete="new-password" placeholder="至少 6 个字符" required>
+          </div>
+          <button type="submit" class="btn-primary" id="btn-register">注册</button>
+        </form>
+        <p class="auth-switch">已有账号？<a id="link-to-login">返回登录</a></p>
+        <div class="auth-error" id="register-error" role="alert"></div>
+      </section>
+    </div>
+
+    <div id="app-view">
+    <div class="user-bar">
+      <span class="welcome">欢迎，<strong id="current-username"></strong></span>
+      <div class="user-bar-actions">
+        <button type="button" class="btn-my-reports" id="btn-my-reports">我的报告</button>
+        <button type="button" class="btn-logout" id="btn-logout">退出登录</button>
+      </div>
+    </div>
+
+    <section class="input-card">
+      <label for="idea-input">创业想法描述</label>
+      <div class="textarea-wrapper">
+        <textarea
+          id="idea-input"
+          placeholder="描述你的创业想法"
+          rows="5"
+        ></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn-evaluate" id="btn-evaluate" type="button">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          评估
+        </button>
+      </div>
+    </section>
+
+    <div class="error-message" id="error-message" role="alert"></div>
+
+    <div class="loading-overlay" id="loading">
+      <div class="spinner"></div>
+      <p>AI 正在分析你的创业想法，请稍候…</p>
+    </div>
+
+    <section class="results-section" id="results">
+      <div class="results-header">
+        <h2>评估报告</h2>
+        <span class="badge" id="report-badge" hidden>报告</span>
+      </div>
+      <div class="results-grid">
+        <article class="result-card">
+          <div class="card-header">
+            <div class="card-icon pain">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            </div>
+            <h3>市场痛点</h3>
+          </div>
+          <p class="card-body market-pain" id="result-market"></p>
+        </article>
+
+        <article class="result-card">
+          <div class="card-header">
+            <div class="card-icon compete">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"/></svg>
+            </div>
+            <h3>竞品分析</h3>
+          </div>
+          <p class="card-body competition" id="result-competition"></p>
+        </article>
+
+        <article class="result-card">
+          <div class="card-header">
+            <div class="card-icon user">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            </div>
+            <h3>用户画像</h3>
+          </div>
+          <p class="card-body user-profile" id="result-user"></p>
+        </article>
+
+        <article class="result-card">
+          <div class="card-header">
+            <div class="card-icon risk">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            </div>
+            <h3>风险提示</h3>
+          </div>
+          <p class="card-body risk" id="result-risk"></p>
+        </article>
+
+        <article class="result-card full-width">
+          <div class="card-header">
+            <div class="card-icon next">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+            </div>
+            <h3>下一步建议</h3>
+          </div>
+          <p class="card-body next-steps" id="result-next"></p>
+        </article>
+      </div>
+    </section>
+
+    <p class="empty-hint" id="empty-hint">填写创业想法后点击「评估」，即可查看分析报告</p>
+
+    <footer class="footer">
+      AI创业项目评估助手
+    </footer>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="reports-modal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="reports-modal-title">
+      <div class="modal-header">
+        <h2 id="reports-modal-title">我的报告</h2>
+        <button type="button" class="modal-close" id="reports-modal-close" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="search-controls" style="margin-bottom: 16px; display: flex; gap: 8px;">
+          <input type="text" id="reports-search-input" placeholder="搜索创业想法..." style="flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <button type="button" class="btn-page" id="reports-search-btn">搜索</button>
+          <button type="button" class="btn-page" id="reports-reset-btn" style="background: #e2e8f0; color: var(--text);">重置</button>
+        </div>
+        <div class="modal-loading" id="reports-loading" hidden>
+          <div class="spinner"></div>
+          <p>正在加载报告列表…</p>
+        </div>
+        <div class="modal-error" id="reports-modal-error" role="alert"></div>
+        <p class="reports-empty" id="reports-empty" hidden>暂无评估记录</p>
+        <ul class="reports-list" id="reports-list"></ul>
+        <div class="reports-pagination" id="reports-pagination" hidden>
+          <button type="button" class="btn-page" id="btn-reports-prev">上一页</button>
+          <span class="reports-page-info" id="reports-page-info">1 / 1</span>
+          <button type="button" class="btn-page" id="btn-reports-next">下一页</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_ACCESS_TOKEN = 'access_token';
+    const STORAGE_USERNAME = 'username';
+
+    const authView = document.getElementById('auth-view');
+    const appView = document.getElementById('app-view');
+    const headerSubtitle = document.getElementById('header-subtitle');
+    const loginPanel = document.getElementById('login-panel');
+    const registerPanel = document.getElementById('register-panel');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const loginError = document.getElementById('login-error');
+    const registerError = document.getElementById('register-error');
+    const currentUsernameEl = document.getElementById('current-username');
+    const reportBadge = document.getElementById('report-badge');
+
+    const ideaInput = document.getElementById('idea-input');
+    const btnEvaluate = document.getElementById('btn-evaluate');
+    const loading = document.getElementById('loading');
+    const results = document.getElementById('results');
+    const emptyHint = document.getElementById('empty-hint');
+    const errorMessage = document.getElementById('error-message');
+
+    const reportsModal = document.getElementById('reports-modal');
+    const reportsModalClose = document.getElementById('reports-modal-close');
+    const reportsLoading = document.getElementById('reports-loading');
+    const reportsModalError = document.getElementById('reports-modal-error');
+    const reportsEmpty = document.getElementById('reports-empty');
+    const reportsList = document.getElementById('reports-list');
+    const reportsPagination = document.getElementById('reports-pagination');
+    const btnReportsPrev = document.getElementById('btn-reports-prev');
+    const btnReportsNext = document.getElementById('btn-reports-next');
+    const reportsPageInfo = document.getElementById('reports-page-info');
+    const btnMyReports = document.getElementById('btn-my-reports');
+
+    const REPORTS_PER_PAGE = 5;
+    let reportsCurrentPage = 1;
+    let reportsTotal = 0;
+    let reportsCurrentSearch = ''; // 当前搜索词
+
+    const resultFieldMap = {
+      market: 'result-market',
+      competition: 'result-competition',
+      user: 'result-user',
+      risk: 'result-risk',
+      next: 'result-next'
+    };
+
+    function getAccessToken() {
+      return localStorage.getItem(STORAGE_ACCESS_TOKEN);
+    }
+
+    function getUsername() {
+      return localStorage.getItem(STORAGE_USERNAME) || '';
+    }
+
+    function saveAuth(accessToken, username) {
+      localStorage.setItem(STORAGE_ACCESS_TOKEN, accessToken);
+      localStorage.setItem(STORAGE_USERNAME, username);
+    }
+
+    function clearAuth() {
+      localStorage.clear();
+    }
+
+    function showAuthError(el, message) {
+      el.textContent = message;
+      el.classList.add('visible');
+    }
+
+    function hideAuthError(el) {
+      el.textContent = '';
+      el.classList.remove('visible');
+    }
+
+    function showLoginPanel() {
+      loginPanel.hidden = false;
+      registerPanel.hidden = true;
+      hideAuthError(loginError);
+      hideAuthError(registerError);
+    }
+
+    function showRegisterPanel() {
+      loginPanel.hidden = true;
+      registerPanel.hidden = false;
+      hideAuthError(loginError);
+      hideAuthError(registerError);
+    }
+
+    function showAuthView() {
+      authView.classList.remove('hidden');
+      appView.classList.remove('visible');
+      headerSubtitle.textContent = '登录后开始评估你的创业想法';
+      showLoginPanel();
+    }
+
+    function showAppView() {
+      authView.classList.add('hidden');
+      appView.classList.add('visible');
+      currentUsernameEl.textContent = getUsername();
+      headerSubtitle.textContent = '输入你的创业想法，快速获得结构化评估报告';
+    }
+
+    function handleUnauthorized(message) {
+      clearAuth();
+      showAuthView();
+      showAuthError(loginError, message || '登录已失效，请重新登录');
+    }
+
+    async function apiRequest(path, options = {}) {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      };
+
+      let response;
+      try {
+        response = await fetch(path, {
+          method: options.method || 'GET',
+          headers,
+          body: options.body != null ? JSON.stringify(options.body) : undefined
+        });
+      } catch {
+        throw new Error('无法连接服务器，请确认后端已启动（python server.py）');
+      }
+
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {
+        /* 空或非 JSON 响应 */
+      }
+
+      if (!response.ok) {
+        if (response.status === 401 && options.requireAuth) {
+          handleUnauthorized(data.error || data.message);
+        }
+        const err = new Error(data.error || data.message || `请求失败（${response.status}）`);
+        err.status = response.status;
+        throw err;
+      }
+
+      return data;
+    }
+
+    async function authRequest(path, options = {}) {
+      const token = getAccessToken();
+      if (!token) {
+        handleUnauthorized('请先登录');
+        const err = new Error('请先登录');
+        err.status = 401;
+        throw err;
+      }
+      return apiRequest(path, {
+        ...options,
+        requireAuth: true,
+        headers: {
+          ...(options.headers || {}),
+          Authorization: 'Bearer ' + token
+        }
+      });
+    }
+
+    function truncateIdea(idea, maxLen = 20) {
+      const text = (idea || '').trim();
+      if (text.length <= maxLen) return text;
+      return text.slice(0, maxLen) + '…';
+    }
+
+    function showModalError(message) {
+      reportsModalError.textContent = message;
+      reportsModalError.classList.add('visible');
+    }
+
+    function hideModalError() {
+      reportsModalError.textContent = '';
+      reportsModalError.classList.remove('visible');
+    }
+
+    function openReportsModal() {
+      reportsModal.classList.add('open');
+      reportsModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeReportsModal() {
+      reportsModal.classList.remove('open');
+      reportsModal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    function renderReportsList(reports) {
+      reportsList.innerHTML = '';
+      reports.forEach((report) => {
+        const li = document.createElement('li');
+        li.className = 'report-item';
+
+        const timeEl = document.createElement('div');
+        timeEl.className = 'report-item-time';
+        timeEl.textContent = report.created_at || '';
+
+        const ideaEl = document.createElement('div');
+        ideaEl.className = 'report-item-idea';
+        ideaEl.textContent = truncateIdea(report.idea_summary || report.idea, 20);
+
+        const actions = document.createElement('div');
+        actions.className = 'report-item-actions';
+
+        const viewBtn = document.createElement('button');
+        viewBtn.type = 'button';
+        viewBtn.className = 'btn-view-report';
+        viewBtn.textContent = '查看详情';
+        viewBtn.addEventListener('click', () => viewReportDetail(String(report.id), viewBtn));
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'btn-delete-report';
+        deleteBtn.textContent = '删除';
+        deleteBtn.addEventListener('click', () => deleteReport(String(report.id), li, deleteBtn));
+
+        actions.append(viewBtn, deleteBtn);
+        li.append(timeEl, ideaEl, actions);
+        reportsList.appendChild(li);
+      });
+    }
+
+    async function deleteReport(reportId, listItem, btn) {
+      if (!reportId) return;
+
+      if (btn) btn.disabled = true;
+      hideModalError();
+
+      try {
+        const data = await authRequest('/report/' + reportId, { method: 'DELETE' });
+        if (data.success === false) {
+          throw new Error(data.error || '删除失败');
+        }
+        await loadReportsList(reportsCurrentPage);
+      } catch (err) {
+        if (err.status !== 401) {
+          showModalError(err.message || '删除失败，请稍后重试');
+        }
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function updateReportsPagination(total, page, perPage) {
+      reportsTotal = total;
+      reportsCurrentPage = page;
+      const totalPages = Math.max(1, Math.ceil(total / perPage) || 1);
+
+      if (total === 0) {
+        reportsPagination.hidden = true;
+        return;
+      }
+
+      reportsPagination.hidden = false;
+      reportsPageInfo.textContent = page + ' / ' + totalPages;
+      btnReportsPrev.disabled = page <= 1;
+      btnReportsNext.disabled = page >= totalPages;
+    }
+
+    async function loadReportsList(page) {
+      if (page == null || page < 1) page = 1;
+
+      hideModalError();
+      reportsEmpty.hidden = true;
+      reportsPagination.hidden = true;
+      reportsList.innerHTML = '';
+      reportsLoading.hidden = false;
+      btnReportsPrev.disabled = true;
+      btnReportsNext.disabled = true;
+
+      try {
+        let url = '/reports?page=' + page + '&per_page=' + REPORTS_PER_PAGE;
+        if (reportsCurrentSearch) {
+          url += '&search=' + encodeURIComponent(reportsCurrentSearch);
+        }
+        let data = await authRequest(url, { method: 'GET' });
+
+        if (data.total > 0 && (data.reports || []).length === 0 && page > 1) {
+          data = await authRequest(
+            '/reports?page=' + (page - 1) + '&per_page=' + REPORTS_PER_PAGE + (reportsCurrentSearch ? '&search=' + encodeURIComponent(reportsCurrentSearch) : ''),
+            { method: 'GET' }
+          );
+          page = data.page;
+        }
+
+        reportsLoading.hidden = true;
+        const reports = data.reports || [];
+        const total = data.total ?? 0;
+        const perPage = data.per_page ?? REPORTS_PER_PAGE;
+
+        if (total === 0) {
+          reportsEmpty.hidden = false;
+          updateReportsPagination(0, 1, perPage);
+          return;
+        }
+
+        renderReportsList(reports);
+        updateReportsPagination(total, data.page ?? page, perPage);
+      } catch (err) {
+        reportsLoading.hidden = true;
+        if (err.status !== 401) {
+          showModalError(err.message || '加载报告列表失败');
+        }
+      }
+    }
+
+    async function viewReportDetail(reportId, btn) {
+      if (!reportId) return;
+
+      if (btn) btn.disabled = true;
+      hideError();
+
+      try {
+        const data = await authRequest('/report/' + reportId, { method: 'GET' });
+        closeReportsModal();
+
+        if (data.idea) {
+          ideaInput.value = data.idea;
+        }
+
+        showResults(data);
+        if (data.id != null) {
+          reportBadge.hidden = false;
+          reportBadge.textContent = '报告 #' + data.id;
+        }
+
+        emptyHint.style.display = 'none';
+        results.classList.add('visible');
+        results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        if (err.status !== 401) {
+          showError(err.message || '加载报告详情失败');
+        }
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    btnMyReports.addEventListener('click', () => {
+      if (!getAccessToken()) {
+        handleUnauthorized('请先登录');
+        return;
+      }
+      openReportsModal();
+      loadReportsList(1);
+    });
+
+    // 搜索功能相关事件监听器
+    const reportsSearchInput = document.getElementById('reports-search-input');
+    const reportsSearchBtn = document.getElementById('reports-search-btn');
+    const reportsResetBtn = document.getElementById('reports-reset-btn');
+
+    reportsSearchBtn.addEventListener('click', () => {
+      reportsCurrentSearch = reportsSearchInput.value.trim();
+      reportsCurrentPage = 1; // 搜索时回到第一页
+      loadReportsList(reportsCurrentPage);
+    });
+
+    reportsResetBtn.addEventListener('click', () => {
+      reportsSearchInput.value = '';
+      reportsCurrentSearch = '';
+      reportsCurrentPage = 1; // 重置时回到第一页
+      loadReportsList(reportsCurrentPage);
+    });
+
+    // 搜索框按回车键触发搜索
+    reportsSearchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        reportsCurrentSearch = reportsSearchInput.value.trim();
+        reportsCurrentPage = 1; // 搜索时回到第一页
+        loadReportsList(reportsCurrentPage);
+      }
+    });
+
+    btnReportsPrev.addEventListener('click', () => {
+      if (reportsCurrentPage > 1) {
+        loadReportsList(reportsCurrentPage - 1);
+      }
+    });
+
+    btnReportsNext.addEventListener('click', () => {
+      const totalPages = Math.max(1, Math.ceil(reportsTotal / REPORTS_PER_PAGE));
+      if (reportsCurrentPage < totalPages) {
+        loadReportsList(reportsCurrentPage + 1);
+      }
+    });
+
+    reportsModalClose.addEventListener('click', closeReportsModal);
+
+    reportsModal.addEventListener('click', (e) => {
+      if (e.target === reportsModal) closeReportsModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && reportsModal.classList.contains('open')) {
+        closeReportsModal();
+      }
+    });
+
+    function handleAuthSuccess(data) {
+      const accessToken = data.access_token || data.token;
+      if (!accessToken) {
+        throw new Error('服务器未返回 access_token');
+      }
+      saveAuth(accessToken, data.username || '');
+      showAppView();
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAuthError(loginError);
+
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('btn-login');
+
+      if (!username || !password) {
+        showAuthError(loginError, '请输入用户名和密码');
+        return;
+      }
+
+      btn.disabled = true;
+      try {
+        const data = await apiRequest('/login', {
+          method: 'POST',
+          auth: false,
+          body: { username, password }
+        });
+        handleAuthSuccess(data);
+      } catch (err) {
+        showAuthError(loginError, err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAuthError(registerError);
+
+      const username = document.getElementById('register-username').value.trim();
+      const password = document.getElementById('register-password').value;
+      const btn = document.getElementById('btn-register');
+
+      if (!username || !password) {
+        showAuthError(registerError, '请输入用户名和密码');
+        return;
+      }
+
+      btn.disabled = true;
+      try {
+        const data = await apiRequest('/register', {
+          method: 'POST',
+          auth: false,
+          body: { username, password }
+        });
+        handleAuthSuccess(data);
+      } catch (err) {
+        showAuthError(registerError, err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('link-to-register').addEventListener('click', (e) => {
+      e.preventDefault();
+      showRegisterPanel();
+    });
+
+    document.getElementById('link-to-login').addEventListener('click', (e) => {
+      e.preventDefault();
+      showLoginPanel();
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      closeReportsModal();
+      clearAuth();
+      showAuthView();
+      results.classList.remove('visible');
+      emptyHint.style.display = '';
+      hideError();
+      reportBadge.hidden = true;
+      reportBadge.textContent = '报告';
+    });
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.classList.add('visible');
+    }
+
+    function hideError() {
+      errorMessage.textContent = '';
+      errorMessage.classList.remove('visible');
+    }
+
+    function showResults(data) {
+      Object.entries(resultFieldMap).forEach(([field, elementId]) => {
+        document.getElementById(elementId).textContent = data[field] ?? '';
+      });
+      if (data.report_id != null) {
+        reportBadge.hidden = false;
+        reportBadge.textContent = '报告 #' + data.report_id;
+      }
+    }
+
+    async function fetchEvaluation(idea) {
+      return authRequest('/evaluate', {
+        method: 'POST',
+        body: { idea }
+      });
+    }
+
+    btnEvaluate.addEventListener('click', async () => {
+      const idea = ideaInput.value.trim();
+
+      if (!idea) {
+        ideaInput.focus();
+        ideaInput.style.borderColor = '#ef4444';
+        setTimeout(() => { ideaInput.style.borderColor = ''; }, 1500);
+        return;
+      }
+
+      if (!getAccessToken()) {
+        handleUnauthorized('请先登录');
+        return;
+      }
+
+      btnEvaluate.disabled = true;
+      hideError();
+      emptyHint.style.display = 'none';
+      results.classList.remove('visible');
+      loading.classList.add('visible');
+
+      try {
+        const data = await fetchEvaluation(idea);
+        showResults(data);
+        results.classList.add('visible');
+        results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        if (err.status !== 401) {
+          showError(err.message || '评估请求失败，请稍后重试');
+        }
+      } finally {
+        loading.classList.remove('visible');
+        btnEvaluate.disabled = false;
+      }
+    });
+
+    ideaInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        btnEvaluate.click();
+      }
+    });
+
+    if (getAccessToken()) {
+      showAppView();
+    } else {
+      showAuthView();
+    }
+  </script>
+</body>
+</html>
