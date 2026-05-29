@@ -1,0 +1,11 @@
+.git/
+__pycache__/
+*.pyc
+logs/
+*.log
+chat_history.db
+*.db
+chroma_db/
+railway/
+.railway/
+.DS_Store
