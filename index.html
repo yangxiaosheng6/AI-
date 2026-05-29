@@ -36,9 +36,9 @@
     }
 
     .page {
-      max-width: 960px;
+      max-width: 100%;
       margin: 0 auto;
-      padding: 32px 20px 64px;
+      padding: 20px 10px 32px;
     }
 
     .header {
@@ -65,7 +65,7 @@
     }
 
     .header h1 {
-      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-size: clamp(1.2rem, 4vw, 1.5rem);
       font-weight: 700;
       letter-spacing: -0.02em;
       margin-bottom: 8px;
@@ -73,15 +73,15 @@
 
     .header p {
       color: var(--text-secondary);
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
 
     .input-card {
       background: var(--surface);
       border-radius: var(--radius);
-      padding: 28px;
+      padding: 20px;
       box-shadow: var(--shadow);
-      margin-bottom: 32px;
+      margin-bottom: 24px;
       border: 1px solid var(--border);
     }
 
@@ -109,6 +109,7 @@
       background: #fafbfc;
       resize: vertical;
       transition: border-color 0.2s, box-shadow 0.2s;
+      height: 44px;
     }
 
     textarea:focus {
@@ -124,7 +125,8 @@
 
     .btn-row {
       display: flex;
-      justify-content: flex-end;
+      flex-direction: column;
+      gap: 10px;
       margin-top: 16px;
     }
 
@@ -142,7 +144,74 @@
       cursor: pointer;
       transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
       box-shadow: 0 2px 12px rgba(79, 70, 229, 0.3);
+      height: 44px;
     }
+
+@media (max-width: 600px) {
+  .page {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 20px 10px 32px;
+  }
+
+  .input-card {
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .header h1 {
+    font-size: clamp(1.2rem, 4vw, 1.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+
+  .header p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  textarea {
+    height: 44px;
+    font-size: 0.9rem;
+  }
+
+  .btn-evaluate {
+    height: 44px;
+    font-size: 0.9rem;
+  }
+
+  .btn-row {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .btn-evaluate {
+    width: 100%;
+  }
+
+  .modal-body {
+    padding: 16px 20px 20px;
+  }
+
+  .search-controls {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #reports-search-input {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  .btn-page {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+}
 
     .btn-evaluate:hover {
       background: var(--primary-hover);
@@ -550,9 +619,7 @@
     }
 
     .modal-body {
-      padding: 16px 24px 24px;
-      overflow-y: auto;
-      flex: 1;
+      padding: 16px 20px 20px;
     }
 
     .modal-loading {
@@ -870,10 +937,12 @@
         <button type="button" class="modal-close" id="reports-modal-close" aria-label="关闭">×</button>
       </div>
       <div class="modal-body">
-        <div class="search-controls" style="margin-bottom: 16px; display: flex; gap: 8px;">
-          <input type="text" id="reports-search-input" placeholder="搜索创业想法..." style="flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;">
-          <button type="button" class="btn-page" id="reports-search-btn">搜索</button>
-          <button type="button" class="btn-page" id="reports-reset-btn" style="background: #e2e8f0; color: var(--text);">重置</button>
+        <div class="search-controls" style="margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px;">
+          <input type="text" id="reports-search-input" placeholder="搜索创业想法..." style="padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-page" id="reports-search-btn">搜索</button>
+            <button type="button" class="btn-page" id="reports-reset-btn" style="background: #e2e8f0; color: var(--text);">重置</button>
+          </div>
         </div>
         <div class="modal-loading" id="reports-loading" hidden>
           <div class="spinner"></div>
@@ -1391,6 +1460,18 @@
       errorMessage.classList.remove('visible');
     }
 
+    function showGlobalError(error) {
+      // 根据错误类型显示不同消息
+      if (error.message && error.message.includes('无法连接服务器')) {
+        alert('网络错误，请检查连接后重试');
+      } else if (error.status && (error.status < 200 || error.status >= 400)) {
+        alert('服务器错误，请稍后重试');
+      } else {
+        // 其他错误情况，使用原始错误消息
+        alert(error.message || '请求失败，请稍后重试');
+      }
+    }
+
     function showResults(data) {
       Object.entries(resultFieldMap).forEach(([field, elementId]) => {
         document.getElementById(elementId).textContent = data[field] ?? '';
@@ -1423,6 +1504,9 @@
         return;
       }
 
+      // 保存原始按钮文本并设置为"评估中..."
+      const originalText = btnEvaluate.textContent;
+      btnEvaluate.textContent = '评估中...';
       btnEvaluate.disabled = true;
       hideError();
       emptyHint.style.display = 'none';
@@ -1436,10 +1520,12 @@
         results.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (err) {
         if (err.status !== 401) {
-          showError(err.message || '评估请求失败，请稍后重试');
+          showGlobalError(err);
         }
       } finally {
         loading.classList.remove('visible');
+        // 恢复原始按钮文本并启用按钮
+        btnEvaluate.textContent = originalText;
         btnEvaluate.disabled = false;
       }
     });
